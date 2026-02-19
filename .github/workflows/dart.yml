@@ -1,0 +1,48 @@
+name: Dart SDK
+
+on:
+  push:
+    paths:
+      - "dart/**"
+      - "testdata/**"
+    branches: [main]
+    tags:
+      - "dart/v*"
+  pull_request:
+    paths:
+      - "dart/**"
+      - "testdata/**"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dart
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+      - run: dart pub get
+      - run: dart analyze
+      - run: dart test
+
+  publish:
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/dart/v')
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dart
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+      - run: dart pub get
+      - name: Configure pub credentials
+        env:
+          PUB_CREDENTIALS_JSON: ${{ secrets.PUB_CREDENTIALS_JSON }}
+        run: |
+          mkdir -p "$HOME/.pub-cache"
+          printf '%s' "$PUB_CREDENTIALS_JSON" > "$HOME/.pub-cache/credentials.json"
+      - run: dart pub publish --force

@@ -11,6 +11,7 @@ All SDKs poll the Bandeira server, cache flags locally, and evaluate strategies 
 | **Go** | [`bandeira-sdks/go`](./go) | `go get github.com/felipekafuri/bandeira-sdks/go` |
 | **JavaScript/TypeScript** | [`bandeira`](./js) | `npm install bandeira` |
 | **Python** | [`bandeira`](./python) | `pip install bandeira` |
+| **Dart/Flutter** | [`bandeira`](./dart) | `dart pub add bandeira` |
 
 ## Quick Start
 
@@ -61,6 +62,27 @@ if client.is_enabled("my-flag", user_id="user-123"):
     # feature is on
 
 client.close()
+```
+
+### Dart / Flutter
+
+```dart
+import 'package:bandeira/bandeira.dart';
+
+Future<void> main() async {
+  final client = await BandeiraClient.create(
+    const BandeiraConfig(
+      url: "http://localhost:8080",
+      token: "your-client-token",
+    ),
+  );
+
+  if (client.isEnabled("my-flag", const BandeiraContext(userId: "user-123"))) {
+    // feature is on
+  }
+
+  client.close();
+}
 ```
 
 ## License
