@@ -5,7 +5,8 @@ on:
     paths:
       - "dart/**"
       - "testdata/**"
-    branches: [main]
+    branches:
+      - main
     tags:
       - "dart/v*"
   pull_request:
@@ -34,15 +35,9 @@ jobs:
       run:
         working-directory: dart
     permissions:
-      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v4
       - uses: dart-lang/setup-dart@v1
       - run: dart pub get
-      - name: Configure pub credentials
-        env:
-          PUB_CREDENTIALS_JSON: ${{ secrets.PUB_CREDENTIALS_JSON }}
-        run: |
-          mkdir -p "$HOME/.pub-cache"
-          printf '%s' "$PUB_CREDENTIALS_JSON" > "$HOME/.pub-cache/credentials.json"
       - run: dart pub publish --force
