@@ -2,7 +2,7 @@
 
 Official client SDKs for [Bandeira](https://github.com/felipekafuri/bandeira), a self-hosted feature flag service.
 
-All SDKs poll the Bandeira server, cache flags locally, and evaluate strategies in-process — so `isEnabled` calls are pure in-memory lookups with zero network latency.
+All SDKs fetch flag definitions from the Bandeira server, cache flags locally, and evaluate strategies in-process — so `isEnabled` calls are pure in-memory lookups with zero network latency.
 
 ## SDKs
 
@@ -11,6 +11,7 @@ All SDKs poll the Bandeira server, cache flags locally, and evaluate strategies 
 | **Go** | [`bandeira-sdks/go`](./go) | `go get github.com/felipekafuri/bandeira-sdks/go` |
 | **JavaScript/TypeScript** | [`bandeira`](./js) | `npm install bandeira` |
 | **Python** | [`bandeira`](./python) | `pip install bandeira` |
+| **PHP** | [`bandeira/bandeira`](./php) | `composer require bandeira/bandeira` |
 | **Dart/Flutter** | [`bandeira`](./dart) | `dart pub add bandeira` |
 
 ## Quick Start
@@ -62,6 +63,35 @@ if client.is_enabled("my-flag", user_id="user-123"):
     # feature is on
 
 client.close()
+```
+
+### PHP
+
+```php
+<?php
+
+use Bandeira\Client;
+use Bandeira\Config;
+use Bandeira\Context;
+
+$client = new Client(new Config(
+    url: 'http://localhost:8080',
+    token: 'your-client-token',
+));
+
+if ($client->isEnabled('my-flag', new Context(userId: 'user-123'))) {
+    // feature is on
+}
+```
+
+### Laravel
+
+```php
+use Bandeira\Laravel\Facades\Bandeira;
+
+if (Bandeira::isEnabledForCurrentRequest('my-flag')) {
+    // feature is on for current user/request
+}
 ```
 
 ### Dart / Flutter

@@ -19,6 +19,9 @@ dart/.dart_tool/
 dart/build/
 dart/.packages
 
+# Docs
+/docs
+
 # IDE
 .idea/
 .vscode/
