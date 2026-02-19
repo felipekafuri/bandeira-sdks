@@ -12,6 +12,7 @@ All SDKs poll the Bandeira server, cache flags locally, and evaluate strategies 
 | **JavaScript/TypeScript** | [`bandeira`](./js) | `npm install bandeira` |
 | **Python** | [`bandeira`](./python) | `pip install bandeira` |
 | **Dart/Flutter** | [`bandeira`](./dart) | `dart pub add bandeira` |
+| **Elixir** | [`bandeira`](./elixir) | `{:bandeira, "~> 0.1.0"}` |
 
 ## Quick Start
 
@@ -83,6 +84,24 @@ Future<void> main() async {
 
   client.close();
 }
+```
+
+### Elixir
+
+```elixir
+alias Bandeira.{Client, Config, Context}
+
+{:ok, client} =
+  Client.start_link(%Config{
+    url: "http://localhost:8080",
+    token: "your-client-token"
+  })
+
+if Client.is_enabled(client, "my-flag", %Context{user_id: "user-123"}) do
+  # feature is on
+end
+
+Client.close(client)
 ```
 
 ## License
