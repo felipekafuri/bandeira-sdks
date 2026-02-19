@@ -71,7 +71,7 @@ defmodule Bandeira.Evaluator do
     |> :unicode.characters_to_binary()
     |> :binary.bin_to_list()
     |> Enum.reduce(0x811C9DC5, fn byte, hash ->
-      (hash ^^^ byte) * 0x01000193 &&& 0xFFFFFFFF
+      bxor(hash, byte) * 0x01000193 &&& 0xFFFFFFFF
     end)
     |> rem(100)
   end

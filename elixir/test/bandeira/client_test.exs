@@ -24,7 +24,7 @@ defmodule Bandeira.ClientTest do
     }
 
     {:ok, pid} = Client.start_link(config)
-    on_exit(fn -> Client.close(pid) end)
+    on_exit(fn -> if Process.alive?(pid), do: Client.close(pid) end)
 
     assert_receive {:request, "http://localhost:9999/api/v1/flags", headers}
     assert {"authorization", "Bearer test-token"} in headers
@@ -32,6 +32,8 @@ defmodule Bandeira.ClientTest do
   end
 
   test "start_link fails fast when initial request is unauthorized" do
+    Process.flag(:trap_exit, true)
+
     config = %Config{
       url: "http://localhost:9999",
       token: "bad-token",
@@ -54,7 +56,7 @@ defmodule Bandeira.ClientTest do
     }
 
     {:ok, pid} = Client.start_link(config)
-    on_exit(fn -> Client.close(pid) end)
+    on_exit(fn -> if Process.alive?(pid), do: Client.close(pid) end)
 
     flags = Client.all_flags(pid)
     assert flags["simple-on"] == true
@@ -72,7 +74,7 @@ defmodule Bandeira.ClientTest do
     }
 
     {:ok, pid} = Client.start_link(config)
-    on_exit(fn -> Client.close(pid) end)
+    on_exit(fn -> if Process.alive?(pid), do: Client.close(pid) end)
 
     response = %{
       "flags" => [
@@ -111,8 +113,8 @@ defmodule Bandeira.ClientTest do
     {:ok, pid} = Client.start_link(config)
 
     on_exit(fn ->
-      Client.close(pid)
-      Agent.stop(counter)
+      if Process.alive?(pid), do: Client.close(pid)
+      if Process.alive?(counter), do: Agent.stop(counter)
     end)
 
     assert Client.is_enabled(pid, "simple-on", nil)
@@ -121,6 +123,8 @@ defmodule Bandeira.ClientTest do
   end
 
   test "validation errors for missing url and token" do
+    Process.flag(:trap_exit, true)
+
     assert {:error, reason1} = Client.start_link(%Config{url: "", token: "x"})
     assert to_string(reason1) =~ "url is required"
 
