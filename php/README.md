@@ -4,6 +4,40 @@ Official PHP client SDK for [Bandeira](https://github.com/felipekafuri/bandeira)
 
 ## Install
 
+Add the repository and require the package:
+
+```json
+{
+    "repositories": [
+        {
+            "type": "package",
+            "package": {
+                "name": "bandeira/bandeira",
+                "version": "0.1.0",
+                "source": {
+                    "url": "https://github.com/felipekafuri/bandeira-sdks.git",
+                    "type": "git",
+                    "reference": "php/v0.1.0"
+                },
+                "autoload": {
+                    "psr-4": {
+                        "Bandeira\\": "php/src/"
+                    }
+                },
+                "require": {
+                    "php": "^8.1",
+                    "php-http/discovery": "^1.20",
+                    "psr/http-client": "^1.0",
+                    "psr/http-factory": "^1.0",
+                    "psr/http-message": "^1.1 || ^2.0",
+                    "illuminate/support": "^10.0 || ^11.0"
+                }
+            }
+        }
+    ]
+}
+```
+
 ```bash
 composer require bandeira/bandeira
 ```

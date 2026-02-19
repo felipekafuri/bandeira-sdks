@@ -11,7 +11,7 @@ All SDKs fetch flag definitions from the Bandeira server, cache flags locally, a
 | **Go** | [`bandeira-sdks/go`](./go) | `go get github.com/felipekafuri/bandeira-sdks/go` |
 | **JavaScript/TypeScript** | [`bandeira`](./js) | `npm install bandeira` |
 | **Python** | [`bandeira`](./python) | `pip install bandeira` |
-| **PHP** | [`bandeira/bandeira`](./php) | `composer require bandeira/bandeira` |
+| **PHP** | [`bandeira/bandeira`](./php) | [See install instructions](./php#install) |
 | **Dart/Flutter** | [`bandeira`](./dart) | `dart pub add bandeira` |
 | **Elixir** | [`bandeira`](./elixir) | `{:bandeira, "~> 0.1.0"}` |
 
