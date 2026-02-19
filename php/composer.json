@@ -1,0 +1,56 @@
+{
+  "name": "bandeira/bandeira",
+  "description": "Official PHP client SDK for Bandeira feature flag service",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Felipe Kafuri"
+    }
+  ],
+  "keywords": [
+    "feature-flags",
+    "feature-toggles",
+    "bandeira",
+    "sdk",
+    "laravel"
+  ],
+  "require": {
+    "php": "^8.1",
+    "php-http/discovery": "^1.20",
+    "psr/http-client": "^1.0",
+    "psr/http-factory": "^1.0",
+    "psr/http-message": "^1.1 || ^2.0",
+    "illuminate/support": "^10.0 || ^11.0"
+  },
+  "require-dev": {
+    "nyholm/psr7": "^1.8",
+    "orchestra/testbench": "^8.0",
+    "phpunit/phpunit": "^10.5"
+  },
+  "autoload": {
+    "psr-4": {
+      "Bandeira\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Bandeira\\Tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "test": "phpunit --colors=always"
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Bandeira\\Laravel\\BandeiraServiceProvider"
+      ],
+      "aliases": {
+        "Bandeira": "Bandeira\\Laravel\\Facades\\Bandeira"
+      }
+    }
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
+}
