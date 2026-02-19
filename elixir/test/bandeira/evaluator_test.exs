@@ -60,6 +60,7 @@ defmodule Bandeira.EvaluatorTest do
       Evaluator.is_flag_enabled(flag!("rollout-session-stickiness"), %Context{
         session_id: "sess-123"
       })
+
     assert is_boolean(result)
   end
 
