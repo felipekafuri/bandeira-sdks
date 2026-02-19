@@ -1,7 +1,8 @@
 defmodule Bandeira.Config do
   @moduledoc "Configuration for a Bandeira client."
 
-  @type http_client_fun :: (String.t(), [{String.t(), String.t()}] -> {:ok, non_neg_integer(), binary()} | {:error, term()})
+  @type http_client_fun :: (String.t(), [{String.t(), String.t()}] ->
+                              {:ok, non_neg_integer(), binary()} | {:error, term()})
 
   @type t :: %__MODULE__{
           url: String.t(),

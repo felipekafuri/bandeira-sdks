@@ -71,7 +71,7 @@ defmodule Bandeira.Evaluator do
     |> :unicode.characters_to_binary()
     |> :binary.bin_to_list()
     |> Enum.reduce(0x811C9DC5, fn byte, hash ->
-      ((hash ^^^ byte) * 0x01000193) &&& 0xFFFFFFFF
+      (hash ^^^ byte) * 0x01000193 &&& 0xFFFFFFFF
     end)
     |> rem(100)
   end
@@ -88,8 +88,12 @@ defmodule Bandeira.Evaluator do
   defp eval_gradual_rollout(%Strategy{} = strategy, %Context{} = context) do
     with {:ok, rollout} <- parse_rollout(get(strategy.parameters, "rollout")) do
       cond do
-        rollout >= 100 -> true
-        rollout <= 0 -> false
+        rollout >= 100 ->
+          true
+
+        rollout <= 0 ->
+          false
+
         true ->
           stickiness = get(strategy.parameters, "stickiness")
 
@@ -131,7 +135,8 @@ defmodule Bandeira.Evaluator do
       address = context.remote_address
 
       Enum.any?(split_multi(raw_ips), fn entry ->
-        entry == address or (String.ends_with?(entry, ".") and String.starts_with?(address, entry))
+        entry == address or
+          (String.ends_with?(entry, ".") and String.starts_with?(address, entry))
       end)
     else
       false
@@ -147,19 +152,48 @@ defmodule Bandeira.Evaluator do
     cv = normalize(context_value, case_insensitive)
 
     case operator do
-      "IN" -> Enum.any?(values, &(cv == normalize(&1, case_insensitive)))
-      "NOT_IN" -> Enum.all?(values, &(cv != normalize(&1, case_insensitive)))
-      "STR_CONTAINS" -> Enum.any?(values, &String.contains?(cv, normalize(&1, case_insensitive)))
-      "STR_STARTS_WITH" -> Enum.any?(values, &String.starts_with?(cv, normalize(&1, case_insensitive)))
-      "STR_ENDS_WITH" -> Enum.any?(values, &String.ends_with?(cv, normalize(&1, case_insensitive)))
-      "NUM_EQ" -> compare_numeric(cv, values, &Kernel.==/2)
-      "NUM_GT" -> compare_numeric(cv, values, &Kernel.>/2)
-      "NUM_GTE" -> compare_numeric(cv, values, &Kernel.>=/2)
-      "NUM_LT" -> compare_numeric(cv, values, &Kernel.</2)
-      "NUM_LTE" -> compare_numeric(cv, values, &Kernel.<=/2)
-      "DATE_AFTER" -> compare_datetime(cv, values, fn value, target -> DateTime.compare(value, target) == :gt end)
-      "DATE_BEFORE" -> compare_datetime(cv, values, fn value, target -> DateTime.compare(value, target) == :lt end)
-      _ -> false
+      "IN" ->
+        Enum.any?(values, &(cv == normalize(&1, case_insensitive)))
+
+      "NOT_IN" ->
+        Enum.all?(values, &(cv != normalize(&1, case_insensitive)))
+
+      "STR_CONTAINS" ->
+        Enum.any?(values, &String.contains?(cv, normalize(&1, case_insensitive)))
+
+      "STR_STARTS_WITH" ->
+        Enum.any?(values, &String.starts_with?(cv, normalize(&1, case_insensitive)))
+
+      "STR_ENDS_WITH" ->
+        Enum.any?(values, &String.ends_with?(cv, normalize(&1, case_insensitive)))
+
+      "NUM_EQ" ->
+        compare_numeric(cv, values, &Kernel.==/2)
+
+      "NUM_GT" ->
+        compare_numeric(cv, values, &Kernel.>/2)
+
+      "NUM_GTE" ->
+        compare_numeric(cv, values, &Kernel.>=/2)
+
+      "NUM_LT" ->
+        compare_numeric(cv, values, &Kernel.</2)
+
+      "NUM_LTE" ->
+        compare_numeric(cv, values, &Kernel.<=/2)
+
+      "DATE_AFTER" ->
+        compare_datetime(cv, values, fn value, target ->
+          DateTime.compare(value, target) == :gt
+        end)
+
+      "DATE_BEFORE" ->
+        compare_datetime(cv, values, fn value, target ->
+          DateTime.compare(value, target) == :lt
+        end)
+
+      _ ->
+        false
     end
   end
 
@@ -226,7 +260,9 @@ defmodule Bandeira.Evaluator do
 
   defp get(parameters, key) when is_map(parameters) do
     cond do
-      Map.has_key?(parameters, key) -> Map.get(parameters, key)
+      Map.has_key?(parameters, key) ->
+        Map.get(parameters, key)
+
       is_binary(key) ->
         Enum.find_value(parameters, fn
           {atom_key, value} when is_atom(atom_key) ->
@@ -236,7 +272,8 @@ defmodule Bandeira.Evaluator do
             nil
         end)
 
-      true -> nil
+      true ->
+        nil
     end
   end
 
