@@ -34,8 +34,13 @@ defmodule Bandeira.EvaluatorTest do
   end
 
   test "userWithId handles newline-separated user IDs" do
-    assert Evaluator.is_flag_enabled(flag!("user-targeting-newlines"), %Context{user_id: "user-42"})
-    refute Evaluator.is_flag_enabled(flag!("user-targeting-newlines"), %Context{user_id: "user-99"})
+    assert Evaluator.is_flag_enabled(flag!("user-targeting-newlines"), %Context{
+             user_id: "user-42"
+           })
+
+    refute Evaluator.is_flag_enabled(flag!("user-targeting-newlines"), %Context{
+             user_id: "user-99"
+           })
   end
 
   test "gradualRollout 100 percent is always on" do
@@ -51,7 +56,10 @@ defmodule Bandeira.EvaluatorTest do
   end
 
   test "gradualRollout session stickiness returns a boolean" do
-    result = Evaluator.is_flag_enabled(flag!("rollout-session-stickiness"), %Context{session_id: "sess-123"})
+    result =
+      Evaluator.is_flag_enabled(flag!("rollout-session-stickiness"), %Context{
+        session_id: "sess-123"
+      })
     assert is_boolean(result)
   end
 
@@ -60,7 +68,9 @@ defmodule Bandeira.EvaluatorTest do
   end
 
   test "remoteAddress prefix match" do
-    assert Evaluator.is_flag_enabled(flag!("ip-allowlist"), %Context{remote_address: "192.168.1.100"})
+    assert Evaluator.is_flag_enabled(flag!("ip-allowlist"), %Context{
+             remote_address: "192.168.1.100"
+           })
   end
 
   test "remoteAddress no match" do
@@ -68,7 +78,9 @@ defmodule Bandeira.EvaluatorTest do
   end
 
   test "remoteAddress supports legacy IPs parameter key" do
-    assert Evaluator.is_flag_enabled(flag!("ip-allowlist-legacy"), %Context{remote_address: "10.0.0.1"})
+    assert Evaluator.is_flag_enabled(flag!("ip-allowlist-legacy"), %Context{
+             remote_address: "10.0.0.1"
+           })
   end
 
   test "constraint IN matches" do
@@ -100,35 +112,71 @@ defmodule Bandeira.EvaluatorTest do
   end
 
   test "case-insensitive constraint" do
-    assert Evaluator.is_flag_enabled(flag!("constraint-case-insensitive"), %Context{properties: %{"country" => "brazil"}})
-    assert Evaluator.is_flag_enabled(flag!("constraint-case-insensitive"), %Context{properties: %{"country" => "PORTUGAL"}})
-    refute Evaluator.is_flag_enabled(flag!("constraint-case-insensitive"), %Context{properties: %{"country" => "spain"}})
+    assert Evaluator.is_flag_enabled(flag!("constraint-case-insensitive"), %Context{
+             properties: %{"country" => "brazil"}
+           })
+
+    assert Evaluator.is_flag_enabled(flag!("constraint-case-insensitive"), %Context{
+             properties: %{"country" => "PORTUGAL"}
+           })
+
+    refute Evaluator.is_flag_enabled(flag!("constraint-case-insensitive"), %Context{
+             properties: %{"country" => "spain"}
+           })
   end
 
   test "STR_CONTAINS constraint" do
-    assert Evaluator.is_flag_enabled(flag!("constraint-str-contains"), %Context{properties: %{"email" => "user@acme.com"}})
-    refute Evaluator.is_flag_enabled(flag!("constraint-str-contains"), %Context{properties: %{"email" => "user@other.com"}})
+    assert Evaluator.is_flag_enabled(flag!("constraint-str-contains"), %Context{
+             properties: %{"email" => "user@acme.com"}
+           })
+
+    refute Evaluator.is_flag_enabled(flag!("constraint-str-contains"), %Context{
+             properties: %{"email" => "user@other.com"}
+           })
   end
 
   test "STR_STARTS_WITH constraint" do
-    assert Evaluator.is_flag_enabled(flag!("constraint-str-starts-with"), %Context{properties: %{"email" => "admin@acme.com"}})
-    refute Evaluator.is_flag_enabled(flag!("constraint-str-starts-with"), %Context{properties: %{"email" => "user@acme.com"}})
+    assert Evaluator.is_flag_enabled(flag!("constraint-str-starts-with"), %Context{
+             properties: %{"email" => "admin@acme.com"}
+           })
+
+    refute Evaluator.is_flag_enabled(flag!("constraint-str-starts-with"), %Context{
+             properties: %{"email" => "user@acme.com"}
+           })
   end
 
   test "STR_ENDS_WITH constraint" do
-    assert Evaluator.is_flag_enabled(flag!("constraint-str-ends-with"), %Context{properties: %{"email" => "user@acme.com"}})
-    refute Evaluator.is_flag_enabled(flag!("constraint-str-ends-with"), %Context{properties: %{"email" => "user@acme.io"}})
+    assert Evaluator.is_flag_enabled(flag!("constraint-str-ends-with"), %Context{
+             properties: %{"email" => "user@acme.com"}
+           })
+
+    refute Evaluator.is_flag_enabled(flag!("constraint-str-ends-with"), %Context{
+             properties: %{"email" => "user@acme.io"}
+           })
   end
 
   test "NUM_GTE constraint" do
-    assert Evaluator.is_flag_enabled(flag!("constraint-num-gte"), %Context{properties: %{"age" => "21"}})
-    assert Evaluator.is_flag_enabled(flag!("constraint-num-gte"), %Context{properties: %{"age" => "18"}})
-    refute Evaluator.is_flag_enabled(flag!("constraint-num-gte"), %Context{properties: %{"age" => "16"}})
+    assert Evaluator.is_flag_enabled(flag!("constraint-num-gte"), %Context{
+             properties: %{"age" => "21"}
+           })
+
+    assert Evaluator.is_flag_enabled(flag!("constraint-num-gte"), %Context{
+             properties: %{"age" => "18"}
+           })
+
+    refute Evaluator.is_flag_enabled(flag!("constraint-num-gte"), %Context{
+             properties: %{"age" => "16"}
+           })
   end
 
   test "DATE_AFTER constraint" do
-    assert Evaluator.is_flag_enabled(flag!("constraint-date-after"), %Context{properties: %{"signupDate" => "2026-06-15T00:00:00Z"}})
-    refute Evaluator.is_flag_enabled(flag!("constraint-date-after"), %Context{properties: %{"signupDate" => "2025-06-15T00:00:00Z"}})
+    assert Evaluator.is_flag_enabled(flag!("constraint-date-after"), %Context{
+             properties: %{"signupDate" => "2026-06-15T00:00:00Z"}
+           })
+
+    refute Evaluator.is_flag_enabled(flag!("constraint-date-after"), %Context{
+             properties: %{"signupDate" => "2025-06-15T00:00:00Z"}
+           })
   end
 
   test "multi-strategy uses OR logic" do
@@ -146,7 +194,12 @@ defmodule Bandeira.EvaluatorTest do
   end
 
   test "unknown strategy fails open" do
-    flag = %Flag{name: "unknown", enabled: true, strategies: [%Strategy{name: "someFutureStrategy"}]}
+    flag = %Flag{
+      name: "unknown",
+      enabled: true,
+      strategies: [%Strategy{name: "someFutureStrategy"}]
+    }
+
     assert Evaluator.is_flag_enabled(flag, %Context{})
   end
 

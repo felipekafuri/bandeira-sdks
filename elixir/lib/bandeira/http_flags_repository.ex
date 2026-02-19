@@ -4,7 +4,8 @@ defmodule Bandeira.HTTPFlagsRepository do
   alias Bandeira.Config
   alias Bandeira.FlagModels
 
-  @spec fetch_flags(Config.t()) :: {:ok, %{optional(String.t()) => Bandeira.FlagModels.Flag.t()}} | {:error, String.t()}
+  @spec fetch_flags(Config.t()) ::
+          {:ok, %{optional(String.t()) => Bandeira.FlagModels.Flag.t()}} | {:error, String.t()}
   def fetch_flags(%Config{} = config) do
     url = normalized_url(config.url) <> "/api/v1/flags"
     headers = [{"authorization", "Bearer " <> config.token}]
@@ -27,7 +28,8 @@ defmodule Bandeira.HTTPFlagsRepository do
   defp request(_config, url, headers), do: default_http_get(url, headers)
 
   @doc false
-  @spec default_http_get(String.t(), [{String.t(), String.t()}]) :: {:ok, non_neg_integer(), binary()} | {:error, String.t()}
+  @spec default_http_get(String.t(), [{String.t(), String.t()}]) ::
+          {:ok, non_neg_integer(), binary()} | {:error, String.t()}
   def default_http_get(url, headers) do
     _ = :inets.start()
     _ = :ssl.start()
