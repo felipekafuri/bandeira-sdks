@@ -1,0 +1,22 @@
+# Go
+go/bin/
+
+# JS/TS
+js/node_modules/
+js/dist/
+js/.tsbuildinfo
+
+# Python
+__pycache__/
+*.pyc
+python/src/*.egg-info/
+python/dist/
+python/.venv/
+python/*.egg-info/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*~
+.DS_Store

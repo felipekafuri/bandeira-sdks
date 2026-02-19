@@ -1,0 +1,52 @@
+name: JS/TS SDK
+
+on:
+  push:
+    paths:
+      - "js/**"
+      - "testdata/**"
+    branches: [main]
+    tags:
+      - "js/v*"
+  pull_request:
+    paths:
+      - "js/**"
+      - "testdata/**"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: js
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
+  publish:
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/js/v')
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: js
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      - run: npm ci
+      - run: npm run build
+      - run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

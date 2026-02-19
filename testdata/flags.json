@@ -1,0 +1,348 @@
+{
+  "flags": [
+    {
+      "name": "simple-on",
+      "enabled": true,
+      "strategies": []
+    },
+    {
+      "name": "simple-off",
+      "enabled": false,
+      "strategies": []
+    },
+    {
+      "name": "default-strategy",
+      "enabled": true,
+      "strategies": [
+        {
+          "name": "default",
+          "parameters": {},
+          "constraints": []
+        }
+      ]
+    },
+    {
+      "name": "user-targeting",
+      "enabled": true,
+      "strategies": [
+        {
+          "name": "userWithId",
+          "parameters": {
+            "userIds": "user-1,user-2,user-42"
+          },
+          "constraints": []
+        }
+      ]
+    },
+    {
+      "name": "user-targeting-newlines",
+      "enabled": true,
+      "strategies": [
+        {
+          "name": "userWithId",
+          "parameters": {
+            "userIds": "user-1\nuser-2\nuser-42"
+          },
+          "constraints": []
+        }
+      ]
+    },
+    {
+      "name": "rollout-100",
+      "enabled": true,
+      "strategies": [
+        {
+          "name": "gradualRollout",
+          "parameters": {
+            "rollout": 100,
+            "stickiness": "userId"
+          },
+          "constraints": []
+        }
+      ]
+    },
+    {
+      "name": "rollout-0",
+      "enabled": true,
+      "strategies": [
+        {
+          "name": "gradualRollout",
+          "parameters": {
+            "rollout": 0,
+            "stickiness": "userId"
+          },
+          "constraints": []
+        }
+      ]
+    },
+    {
+      "name": "rollout-50",
+      "enabled": true,
+      "strategies": [
+        {
+          "name": "gradualRollout",
+          "parameters": {
+            "rollout": 50,
+            "stickiness": "userId",
+            "groupId": "experiment-1"
+          },
+          "constraints": []
+        }
+      ]
+    },
+    {
+      "name": "rollout-session-stickiness",
+      "enabled": true,
+      "strategies": [
+        {
+          "name": "gradualRollout",
+          "parameters": {
+            "rollout": 50,
+            "stickiness": "sessionId"
+          },
+          "constraints": []
+        }
+      ]
+    },
+    {
+      "name": "ip-allowlist",
+      "enabled": true,
+      "strategies": [
+        {
+          "name": "remoteAddress",
+          "parameters": {
+            "ips": "10.0.0.1\n192.168.1."
+          },
+          "constraints": []
+        }
+      ]
+    },
+    {
+      "name": "ip-allowlist-legacy",
+      "enabled": true,
+      "strategies": [
+        {
+          "name": "remoteAddress",
+          "parameters": {
+            "IPs": "10.0.0.1,192.168.1."
+          },
+          "constraints": []
+        }
+      ]
+    },
+    {
+      "name": "constraint-in",
+      "enabled": true,
+      "strategies": [
+        {
+          "name": "default",
+          "parameters": {},
+          "constraints": [
+            {
+              "context_name": "companyId",
+              "operator": "IN",
+              "values": ["1", "2", "3"],
+              "inverted": false,
+              "case_insensitive": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "constraint-not-in",
+      "enabled": true,
+      "strategies": [
+        {
+          "name": "default",
+          "parameters": {},
+          "constraints": [
+            {
+              "context_name": "plan",
+              "operator": "NOT_IN",
+              "values": ["free", "trial"],
+              "inverted": false,
+              "case_insensitive": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "constraint-inverted",
+      "enabled": true,
+      "strategies": [
+        {
+          "name": "default",
+          "parameters": {},
+          "constraints": [
+            {
+              "context_name": "plan",
+              "operator": "IN",
+              "values": ["free"],
+              "inverted": true,
+              "case_insensitive": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "constraint-case-insensitive",
+      "enabled": true,
+      "strategies": [
+        {
+          "name": "default",
+          "parameters": {},
+          "constraints": [
+            {
+              "context_name": "country",
+              "operator": "IN",
+              "values": ["Brazil", "Portugal"],
+              "inverted": false,
+              "case_insensitive": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "constraint-str-contains",
+      "enabled": true,
+      "strategies": [
+        {
+          "name": "default",
+          "parameters": {},
+          "constraints": [
+            {
+              "context_name": "email",
+              "operator": "STR_CONTAINS",
+              "values": ["@acme.com"],
+              "inverted": false,
+              "case_insensitive": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "constraint-str-starts-with",
+      "enabled": true,
+      "strategies": [
+        {
+          "name": "default",
+          "parameters": {},
+          "constraints": [
+            {
+              "context_name": "email",
+              "operator": "STR_STARTS_WITH",
+              "values": ["admin@", "support@"],
+              "inverted": false,
+              "case_insensitive": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "constraint-str-ends-with",
+      "enabled": true,
+      "strategies": [
+        {
+          "name": "default",
+          "parameters": {},
+          "constraints": [
+            {
+              "context_name": "email",
+              "operator": "STR_ENDS_WITH",
+              "values": [".com", ".org"],
+              "inverted": false,
+              "case_insensitive": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "constraint-num-gte",
+      "enabled": true,
+      "strategies": [
+        {
+          "name": "default",
+          "parameters": {},
+          "constraints": [
+            {
+              "context_name": "age",
+              "operator": "NUM_GTE",
+              "values": ["18"],
+              "inverted": false,
+              "case_insensitive": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "constraint-date-after",
+      "enabled": true,
+      "strategies": [
+        {
+          "name": "default",
+          "parameters": {},
+          "constraints": [
+            {
+              "context_name": "signupDate",
+              "operator": "DATE_AFTER",
+              "values": ["2026-01-01T00:00:00Z"],
+              "inverted": false,
+              "case_insensitive": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "multi-strategy",
+      "enabled": true,
+      "strategies": [
+        {
+          "name": "userWithId",
+          "parameters": {
+            "userIds": "vip-1,vip-2"
+          },
+          "constraints": []
+        },
+        {
+          "name": "gradualRollout",
+          "parameters": {
+            "rollout": 10,
+            "stickiness": "userId"
+          },
+          "constraints": []
+        }
+      ]
+    },
+    {
+      "name": "constrained-rollout",
+      "enabled": true,
+      "strategies": [
+        {
+          "name": "gradualRollout",
+          "parameters": {
+            "rollout": 100,
+            "stickiness": "userId"
+          },
+          "constraints": [
+            {
+              "context_name": "companyId",
+              "operator": "IN",
+              "values": ["acme"],
+              "inverted": false,
+              "case_insensitive": false
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "name": "bandeira",
+  "version": "0.1.0",
+  "description": "Official JavaScript/TypeScript client SDK for Bandeira feature flag service",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "test": "tsx --test src/index.test.ts",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "feature-flags",
+    "feature-toggles",
+    "bandeira",
+    "sdk"
+  ],
+  "author": "Felipe Kafuri",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/felipekafuri/bandeira-sdks",
+    "directory": "js"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.0",
+    "tsup": "^8.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.0.0"
+  }
+}
