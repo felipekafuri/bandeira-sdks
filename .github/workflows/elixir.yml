@@ -1,0 +1,52 @@
+name: Elixir SDK
+
+on:
+  push:
+    paths:
+      - "elixir/**"
+      - "testdata/**"
+    branches: [main]
+    tags:
+      - "elixir/v*"
+  pull_request:
+    paths:
+      - "elixir/**"
+      - "testdata/**"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: elixir
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.17.3"
+          otp-version: "27.1"
+      - run: mix local.hex --force
+      - run: mix deps.get
+      - run: mix format --check-formatted
+      - run: mix test
+
+  publish:
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/elixir/v')
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: elixir
+    permissions:
+      contents: read
+    env:
+      HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.17.3"
+          otp-version: "27.1"
+      - run: mix local.hex --force
+      - run: mix deps.get
+      - run: mix hex.publish --yes

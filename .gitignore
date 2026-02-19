@@ -14,6 +14,17 @@ python/dist/
 python/.venv/
 python/*.egg-info/
 
+# Dart
+dart/.dart_tool/
+dart/build/
+dart/.packages
+
+# Elixir
+elixir/_build/
+elixir/deps/
+elixir/doc/
+elixir/*.ez
+
 # Docs
 /docs
 

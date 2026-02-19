@@ -12,6 +12,8 @@ All SDKs fetch flag definitions from the Bandeira server, cache flags locally, a
 | **JavaScript/TypeScript** | [`bandeira`](./js) | `npm install bandeira` |
 | **Python** | [`bandeira`](./python) | `pip install bandeira` |
 | **PHP** | [`bandeira/bandeira`](./php) | `composer require bandeira/bandeira` |
+| **Dart/Flutter** | [`bandeira`](./dart) | `dart pub add bandeira` |
+| **Elixir** | [`bandeira`](./elixir) | `{:bandeira, "~> 0.1.0"}` |
 
 ## Quick Start
 
@@ -91,6 +93,40 @@ use Bandeira\Laravel\Facades\Bandeira;
 if (Bandeira::isEnabledForCurrentRequest('my-flag')) {
     // feature is on for current user/request
 }
+```
+
+### Dart / Flutter
+
+```dart
+import 'package:bandeira/bandeira.dart';
+
+Future<void> main() async {
+  final client = await BandeiraClient.create(
+    const BandeiraConfig(
+      url: "http://localhost:8080",
+      token: "your-client-token",
+    ),
+  );
+
+  if (client.isEnabled("my-flag", const BandeiraContext(userId: "user-123"))) {
+    // feature is on
+  }
+
+  client.close();
+}
+```
+
+### Elixir
+
+```elixir
+{:ok, client} = Bandeira.Client.start_link(
+  url: "http://localhost:8080",
+  token: "your-client-token"
+)
+
+if Bandeira.Client.enabled?(client, "my-flag", %Bandeira.Context{user_id: "user-123"}) do
+  # feature is on
+end
 ```
 
 ## License
