@@ -21,6 +21,8 @@
 package bandeira
 
 import (
+	"bufio"
+	"context"
 	"encoding/json"
 	"fmt"
 	"hash/fnv"
@@ -42,10 +44,17 @@ type Config struct {
 	Token string
 
 	// PollInterval controls how often the client fetches flags from the server.
-	// Defaults to 15 seconds.
+	// Defaults to 15 seconds. Ignored when Streaming is true.
 	PollInterval time.Duration
 
+	// Streaming enables real-time flag updates via Server-Sent Events (SSE)
+	// instead of polling. When true, the client connects to /api/v1/stream
+	// and receives flag updates instantly when they change on the server.
+	Streaming bool
+
 	// HTTPClient is an optional custom HTTP client. If nil, http.DefaultClient is used.
+	// When Streaming is true, the client uses a separate HTTP client with no
+	// timeout for the long-lived SSE connection.
 	HTTPClient *http.Client
 
 	// Logger is an optional logger for errors. If nil, log.Default() is used.
@@ -141,9 +150,12 @@ func New(cfg Config) (*Client, error) {
 		return nil, fmt.Errorf("bandeira: initial fetch failed: %w", err)
 	}
 
-	// Start background poller.
 	c.wg.Add(1)
-	go c.poll()
+	if cfg.Streaming {
+		go c.stream()
+	} else {
+		go c.poll()
+	}
 
 	return c, nil
 }
@@ -252,6 +264,140 @@ func (c *Client) fetch() error {
 	c.mu.Unlock()
 
 	return nil
+}
+
+// stream connects to the SSE endpoint and updates flags in real-time.
+// On connection drop, it reconnects with exponential backoff.
+func (c *Client) stream() {
+	defer c.wg.Done()
+
+	const (
+		minBackoff = 1 * time.Second
+		maxBackoff = 30 * time.Second
+	)
+	backoff := minBackoff
+
+	// SSE connections must not have a timeout.
+	sseClient := &http.Client{Timeout: 0}
+
+	for {
+		select {
+		case <-c.done:
+			return
+		default:
+		}
+
+		err := c.connectSSE(sseClient)
+		if err != nil {
+			c.logger.Printf("bandeira: stream disconnected: %v", err)
+		}
+
+		// Check if we're shutting down before reconnecting.
+		select {
+		case <-c.done:
+			return
+		default:
+		}
+
+		c.logger.Printf("bandeira: reconnecting in %v", backoff)
+		select {
+		case <-c.done:
+			return
+		case <-time.After(backoff):
+		}
+
+		// Exponential backoff with cap.
+		backoff *= 2
+		if backoff > maxBackoff {
+			backoff = maxBackoff
+		}
+	}
+}
+
+// connectSSE establishes a single SSE connection and processes events until
+// the connection drops or the client is closed. Returns nil on clean shutdown.
+func (c *Client) connectSSE(sseClient *http.Client) error {
+	url := strings.TrimRight(c.cfg.URL, "/") + "/api/v1/stream"
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Cancel the HTTP request when the client is closed.
+	go func() {
+		select {
+		case <-c.done:
+			cancel()
+		case <-ctx.Done():
+		}
+	}()
+
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", "Bearer "+c.cfg.Token)
+	req.Header.Set("Accept", "text/event-stream")
+
+	resp, err := sseClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(body))
+	}
+
+	scanner := bufio.NewScanner(resp.Body)
+	var eventType string
+	var dataLines []string
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		if line == "" {
+			// Empty line = end of event.
+			if eventType == "flags" && len(dataLines) > 0 {
+				data := strings.Join(dataLines, "\n")
+				c.applyFlagData([]byte(data))
+				// Reset backoff on successful event.
+			}
+			eventType = ""
+			dataLines = nil
+			continue
+		}
+
+		if strings.HasPrefix(line, "event: ") {
+			eventType = strings.TrimPrefix(line, "event: ")
+		} else if strings.HasPrefix(line, "data: ") {
+			dataLines = append(dataLines, strings.TrimPrefix(line, "data: "))
+		}
+		// Ignore comments (lines starting with ':') and other fields.
+	}
+
+	if err := scanner.Err(); err != nil {
+		return err
+	}
+	return fmt.Errorf("connection closed by server")
+}
+
+// applyFlagData parses a JSON flag payload and updates the local cache.
+func (c *Client) applyFlagData(data []byte) {
+	var apiResp apiResponse
+	if err := json.Unmarshal(data, &apiResp); err != nil {
+		c.logger.Printf("bandeira: failed to parse SSE data: %v", err)
+		return
+	}
+
+	m := make(map[string]flag, len(apiResp.Flags))
+	for _, f := range apiResp.Flags {
+		m[f.Name] = f
+	}
+
+	c.mu.Lock()
+	c.flags = m
+	c.mu.Unlock()
 }
 
 // ── Strategy evaluation ───────────────────────────────────────────────────
