@@ -2,9 +2,6 @@ name: Python SDK
 
 on:
   push:
-    paths:
-      - "python/**"
-      - "testdata/**"
     branches: [main]
     tags:
       - "python/v*"

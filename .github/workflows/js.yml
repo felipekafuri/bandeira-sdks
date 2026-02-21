@@ -2,9 +2,6 @@ name: JS/TS SDK
 
 on:
   push:
-    paths:
-      - "js/**"
-      - "testdata/**"
     branches: [main]
     tags:
       - "js/v*"

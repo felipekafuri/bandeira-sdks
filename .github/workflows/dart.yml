@@ -2,9 +2,6 @@ name: Dart SDK
 
 on:
   push:
-    paths:
-      - "dart/**"
-      - "testdata/**"
     branches:
       - main
     tags:

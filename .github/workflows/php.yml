@@ -2,9 +2,6 @@ name: PHP SDK
 
 on:
   push:
-    paths:
-      - "php/**"
-      - "testdata/**"
     branches:
       - main
     tags:

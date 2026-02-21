@@ -2,9 +2,6 @@ name: Elixir SDK
 
 on:
   push:
-    paths:
-      - "elixir/**"
-      - "testdata/**"
     branches: [main]
     tags:
       - "elixir/v*"

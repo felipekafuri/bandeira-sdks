@@ -2,9 +2,6 @@ name: Go SDK
 
 on:
   push:
-    paths:
-      - "go/**"
-      - "testdata/**"
     branches: [main]
     tags:
       - "go/v*"
