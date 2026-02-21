@@ -1,6 +1,6 @@
 name: bandeira
 description: Official Dart/Flutter client SDK for Bandeira feature flag service
-version: 0.1.0
+version: 0.2.0
 homepage: https://github.com/felipekafuri/bandeira-sdks
 repository: https://github.com/felipekafuri/bandeira-sdks/tree/main/dart
 issue_tracker: https://github.com/felipekafuri/bandeira-sdks/issues

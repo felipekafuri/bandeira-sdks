@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "bandeira"
-version = "0.1.0"
+version = "0.2.0"
 description = "Official Python client SDK for Bandeira feature flag service"
 readme = "README.md"
 license = "MIT"
