@@ -14,6 +14,8 @@ export interface BandeiraConfig {
   token: string;
   /** Poll interval in milliseconds. Defaults to 15000 (15 seconds). */
   pollInterval?: number;
+  /** Enable real-time flag updates via SSE instead of polling. */
+  streaming?: boolean;
   /** Custom fetch function (for testing or non-browser environments). */
   fetchFn?: typeof fetch;
 }
@@ -58,8 +60,10 @@ interface ApiResponse {
 export class BandeiraClient {
   private flags: Map<string, Flag> = new Map();
   private timer: ReturnType<typeof setInterval> | null = null;
+  private abortController: AbortController | null = null;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private readonly config: Required<
-    Pick<BandeiraConfig, "url" | "token" | "pollInterval">
+    Pick<BandeiraConfig, "url" | "token" | "pollInterval" | "streaming">
   > & { fetchFn: typeof fetch };
 
   constructor(config: BandeiraConfig) {
@@ -70,24 +74,124 @@ export class BandeiraClient {
       url: config.url.replace(/\/+$/, ""),
       token: config.token,
       pollInterval: config.pollInterval ?? 15_000,
+      streaming: config.streaming ?? false,
       fetchFn: config.fetchFn ?? globalThis.fetch.bind(globalThis),
     };
   }
 
-  /** Start polling. Must be called before isEnabled(). */
+  /** Start polling or SSE streaming. Must be called before isEnabled(). */
   async start(): Promise<void> {
     await this.fetch();
-    this.timer = setInterval(() => {
-      this.fetch().catch(() => {});
-    }, this.config.pollInterval);
+    if (this.config.streaming) {
+      this.connectSSE();
+    } else {
+      this.timer = setInterval(() => {
+        this.fetch().catch(() => {});
+      }, this.config.pollInterval);
+    }
   }
 
-  /** Stop polling and release resources. */
+  /** Stop polling/streaming and release resources. */
   close(): void {
     if (this.timer !== null) {
       clearInterval(this.timer);
       this.timer = null;
     }
+    if (this.reconnectTimer !== null) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    if (this.abortController !== null) {
+      this.abortController.abort();
+      this.abortController = null;
+    }
+  }
+
+  private connectSSE(backoff = 1000): void {
+    const controller = new AbortController();
+    this.abortController = controller;
+
+    const url = `${this.config.url}/api/v1/stream`;
+    this.config
+      .fetchFn(url, {
+        headers: {
+          Authorization: `Bearer ${this.config.token}`,
+          Accept: "text/event-stream",
+        },
+        signal: controller.signal,
+      })
+      .then(async (resp) => {
+        if (!resp.ok || !resp.body) {
+          throw new Error(`bandeira: SSE status ${resp.status}`);
+        }
+
+        // Reset backoff on successful connection.
+        let nextBackoff = 1000;
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder();
+        let buf = "";
+        let eventType = "";
+        let dataLines: string[] = [];
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buf += decoder.decode(value, { stream: true });
+
+            const lines = buf.split("\n");
+            // Keep the last incomplete line in the buffer.
+            buf = lines.pop() ?? "";
+
+            for (const line of lines) {
+              if (line.startsWith(":")) continue; // SSE comment
+              if (line.startsWith("event:")) {
+                eventType = line.slice(6).trim();
+              } else if (line.startsWith("data:")) {
+                dataLines.push(line.slice(5).trim());
+              } else if (line === "") {
+                // Empty line = end of event.
+                if (eventType === "flags" && dataLines.length > 0) {
+                  try {
+                    const data: ApiResponse = JSON.parse(
+                      dataLines.join("\n")
+                    );
+                    const m = new Map<string, Flag>();
+                    for (const f of data.flags) {
+                      m.set(f.name, f);
+                    }
+                    this.flags = m;
+                  } catch {
+                    // Ignore malformed JSON.
+                  }
+                }
+                eventType = "";
+                dataLines = [];
+              }
+            }
+          }
+        } catch (err) {
+          if (controller.signal.aborted) return;
+        }
+
+        // Stream ended — reconnect.
+        if (!controller.signal.aborted) {
+          this.reconnectTimer = setTimeout(
+            () => this.connectSSE(Math.min(nextBackoff * 2, 30_000)),
+            nextBackoff
+          );
+        }
+      })
+      .catch((err) => {
+        if (controller.signal.aborted) return;
+        // Connection failed — reconnect with backoff.
+        const nextBackoff = Math.min(backoff * 2, 30_000);
+        this.reconnectTimer = setTimeout(
+          () => this.connectSSE(nextBackoff),
+          backoff
+        );
+      });
   }
 
   /**

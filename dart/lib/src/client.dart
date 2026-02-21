@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
@@ -42,6 +43,7 @@ class BandeiraClient {
 
   Map<String, Flag> _flags = <String, Flag>{};
   Timer? _pollTimer;
+  StreamSubscription<List<int>>? _sseSubscription;
   bool _started = false;
   bool _closed = false;
   bool _polling = false;
@@ -56,9 +58,13 @@ class BandeiraClient {
 
     await _refreshFlags();
     _started = true;
-    _pollTimer = Timer.periodic(_config.pollInterval, (_) {
-      unawaited(_pollOnce());
-    });
+    if (_config.streaming) {
+      _connectSSE();
+    } else {
+      _pollTimer = Timer.periodic(_config.pollInterval, (_) {
+        unawaited(_pollOnce());
+      });
+    }
   }
 
   void close() {
@@ -68,6 +74,8 @@ class BandeiraClient {
     _closed = true;
     _pollTimer?.cancel();
     _pollTimer = null;
+    _sseSubscription?.cancel();
+    _sseSubscription = null;
     if (_ownsHttpClient) {
       _httpClient.close();
     }
@@ -94,6 +102,81 @@ class BandeiraClient {
       byName[flag.name] = flag;
     }
     _flags = byName;
+  }
+
+  void _connectSSE([int backoffMs = 1000]) {
+    final url = '${_config.url.replaceAll(RegExp(r'/+$'), '')}/api/v1/stream';
+    final request = http.Request('GET', Uri.parse(url));
+    request.headers['Authorization'] = 'Bearer ${_config.token}';
+    request.headers['Accept'] = 'text/event-stream';
+
+    _httpClient.send(request).then((response) {
+      if (response.statusCode != 200) {
+        throw StateError('bandeira: SSE status ${response.statusCode}');
+      }
+
+      var eventType = '';
+      var dataLines = <String>[];
+      var buf = '';
+      var nextBackoff = 1000;
+
+      _sseSubscription = response.stream.listen(
+        (chunk) {
+          buf += utf8.decode(chunk);
+
+          final lines = buf.split('\n');
+          buf = lines.removeLast(); // Keep incomplete line.
+
+          for (final line in lines) {
+            if (line.startsWith(':')) continue;
+            if (line.startsWith('event:')) {
+              eventType = line.substring(6).trim();
+            } else if (line.startsWith('data:')) {
+              dataLines.add(line.substring(5).trim());
+            } else if (line.isEmpty) {
+              if (eventType == 'flags' && dataLines.isNotEmpty) {
+                try {
+                  final data = jsonDecode(dataLines.join('\n'))
+                      as Map<String, dynamic>;
+                  final parsed = ApiResponse.fromJson(data);
+                  final byName = <String, Flag>{};
+                  for (final flag in parsed.flags) {
+                    byName[flag.name] = flag;
+                  }
+                  _flags = byName;
+                } catch (_) {}
+              }
+              eventType = '';
+              dataLines = <String>[];
+            }
+          }
+        },
+        onDone: () {
+          if (!_closed) {
+            Future<void>.delayed(
+              Duration(milliseconds: nextBackoff),
+              () => _connectSSE((nextBackoff * 2).clamp(1000, 30000)),
+            );
+          }
+        },
+        onError: (_) {
+          if (!_closed) {
+            Future<void>.delayed(
+              Duration(milliseconds: backoffMs),
+              () => _connectSSE((backoffMs * 2).clamp(1000, 30000)),
+            );
+          }
+        },
+        cancelOnError: true,
+      );
+    }).catchError((Object err) {
+      if (!_closed) {
+        Future<void>.delayed(
+          Duration(milliseconds: backoffMs),
+          () => _connectSSE((backoffMs * 2).clamp(1000, 30000)),
+        );
+      }
+    });
   }
 
   Future<void> _pollOnce() async {

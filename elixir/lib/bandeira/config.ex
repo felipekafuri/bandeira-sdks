@@ -8,12 +8,14 @@ defmodule Bandeira.Config do
           url: String.t(),
           token: String.t(),
           poll_interval: pos_integer(),
+          streaming: boolean(),
           http_client: http_client_fun() | nil
         }
 
   defstruct url: "",
             token: "",
             poll_interval: 15_000,
+            streaming: false,
             http_client: nil
 
   @spec new(t() | map() | keyword()) :: {:ok, t()} | {:error, String.t()}
@@ -30,6 +32,7 @@ defmodule Bandeira.Config do
       url: get(map, :url, ""),
       token: get(map, :token, ""),
       poll_interval: get(map, :poll_interval, 15_000),
+      streaming: get(map, :streaming, false),
       http_client: get(map, :http_client, nil)
     }
 

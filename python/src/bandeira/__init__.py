@@ -32,6 +32,9 @@ class Config:
     poll_interval: float = 15.0
     """Poll interval in seconds. Defaults to 15."""
 
+    streaming: bool = False
+    """Enable real-time flag updates via SSE instead of polling."""
+
     http_client: httpx.Client | None = None
     """Optional custom httpx client."""
 
@@ -84,15 +87,19 @@ class BandeiraClient:
         self._http = config.http_client or httpx.Client(timeout=10.0)
         self._owns_http = config.http_client is None
 
+        self._streaming = config.streaming
         self._lock = threading.RLock()
         self._flags: dict[str, _Flag] = {}
         self._stop_event = threading.Event()
         self._thread: threading.Thread | None = None
 
     def start(self) -> None:
-        """Fetch flags and start the background poller."""
+        """Fetch flags and start the background poller or SSE stream."""
         self._fetch()
-        self._thread = threading.Thread(target=self._poll, daemon=True)
+        if self._streaming:
+            self._thread = threading.Thread(target=self._stream, daemon=True)
+        else:
+            self._thread = threading.Thread(target=self._poll, daemon=True)
         self._thread.start()
 
     def close(self) -> None:
@@ -144,6 +151,54 @@ class BandeiraClient:
                 self._fetch()
             except Exception:
                 pass
+
+    def _stream(self) -> None:
+        url = f"{self._url}/api/v1/stream"
+        headers = {
+            "Authorization": f"Bearer {self._token}",
+            "Accept": "text/event-stream",
+        }
+        backoff = 1.0
+        max_backoff = 30.0
+
+        while not self._stop_event.is_set():
+            try:
+                with httpx.Client(timeout=None) as client:
+                    with client.stream("GET", url, headers=headers) as resp:
+                        resp.raise_for_status()
+                        backoff = 1.0  # Reset on successful connection.
+                        event_type = ""
+                        data_lines: list[str] = []
+
+                        for line in resp.iter_lines():
+                            if self._stop_event.is_set():
+                                return
+                            if line.startswith(":"):
+                                continue
+                            if line.startswith("event:"):
+                                event_type = line[6:].strip()
+                            elif line.startswith("data:"):
+                                data_lines.append(line[5:].strip())
+                            elif line == "":
+                                if event_type == "flags" and data_lines:
+                                    try:
+                                        import json
+
+                                        data = json.loads("\n".join(data_lines))
+                                        flags = _parse_response(data)
+                                        with self._lock:
+                                            self._flags = flags
+                                    except Exception:
+                                        pass
+                                event_type = ""
+                                data_lines = []
+            except Exception:
+                pass
+
+            if self._stop_event.is_set():
+                return
+            self._stop_event.wait(backoff)
+            backoff = min(backoff * 2, max_backoff)
 
     def _fetch(self) -> None:
         url = f"{self._url}/api/v1/flags"
