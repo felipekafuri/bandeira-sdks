@@ -18,7 +18,7 @@ jobs:
         working-directory: go
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
           go-version-file: go/go.mod
       - run: go test -v -race ./...
